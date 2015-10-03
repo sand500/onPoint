@@ -5,10 +5,11 @@ using System.Text;
 using System.Xml.Linq;
 using System.Diagnostics;
 using System.Windows.Forms;
-
+using System.Net.Http;
 using PowerPoint = Microsoft.Office.Interop.PowerPoint;
 using Office = Microsoft.Office.Core;
 using Microsoft.Office.Tools;
+using Flurl.Http;
 
 namespace onPoint
 {
@@ -24,9 +25,16 @@ namespace onPoint
         {
         }
 
-        private void ThisAddIn_NextSlide(PowerPoint.SlideShowWindow Wn)
+        private void ThisAddIn_SlideChange(PowerPoint.SlideRange sld)
         {
-            Debug.Print("yo");
+            Debug.Print(sld.SlideIndex+" ");
+        }
+
+
+        private async void ThisAddIn_NextSlide(PowerPoint.SlideShowWindow Wn)
+        {
+             String s =await ( "https://onpoint.firebaseio.com/showss/38A011750F21.json").PatchJsonAsync(new { a = 1, b = 2 }).ReceiveString();
+            Debug.Print(s + "\n");
         }
 
         #region VSTO generated code
@@ -45,6 +53,7 @@ namespace onPoint
 
 
             this.Application.PresentationNewSlide += new PowerPoint.EApplication_PresentationNewSlideEventHandler(Application_PresentationNewSlide);
+            this.Application.SlideSelectionChanged += new PowerPoint.EApplication_SlideSelectionChangedEventHandler(ThisAddIn_SlideChange);
             myUserControl1 = new UserControl1();
             myCustomTaskPane = this.CustomTaskPanes.Add(myUserControl1, "My Task Pane");
             myCustomTaskPane.Visible = true;
