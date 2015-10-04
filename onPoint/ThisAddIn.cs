@@ -14,6 +14,7 @@ using System.Xml;
 using System.Xml.Serialization;
 using System.IO;
 using Newtonsoft.Json;
+using System.Threading;
 
 namespace onPoint
 {
@@ -23,11 +24,14 @@ namespace onPoint
         private Microsoft.Office.Tools.CustomTaskPane myCustomTaskPane;
         public Dictionary<int, SlideContents> slideDataList;
         private String key = "default";
-
+        private static System.Timers.Timer aTimer;
+        public volatile PowerPoint.SlideShowWindow sww;
+        private volatile static SemaphoreSlim mut = new SemaphoreSlim(1);
+        int slidenum = 0;
         private static void xmlWrite(Microsoft.Office.Interop.PowerPoint.Presentation presentation, string s)
         {
 
-            int xmlCount = presentation.CustomXMLParts.Count;
+                int xmlCount = presentation.CustomXMLParts.Count;
             // if (xmlCount > 0)
             // {
 
@@ -104,6 +108,15 @@ namespace onPoint
             key = myUserControl1.getKey();
             String s = await ("https://onpoint.firebaseio.com/shows/" + key + ".json").PatchJsonAsync(slideDataList).ReceiveString();
             Debug.Print(s + "\n");
+            sww = sw;
+            aTimer = new System.Timers.Timer(50);
+            aTimer.Elapsed += OnTimedEvent;
+            aTimer.AutoReset = true;
+            aTimer.Enabled = true;
+        }
+        private void ThisAddIn_EndSlideshow(PowerPoint.Presentation pres)
+        {
+
         }
 
         private void ThisAddIn_afterPresentationOpen(PowerPoint.Presentation p)
@@ -156,7 +169,7 @@ namespace onPoint
             this.Application.SlideShowBegin += new PowerPoint.EApplication_SlideShowBeginEventHandler(ThisAddIn_StartSlideshow);
             this.Application.AfterPresentationOpen += new PowerPoint.EApplication_AfterPresentationOpenEventHandler(ThisAddIn_afterPresentationOpen);
             this.Application.PresentationBeforeSave += new PowerPoint.EApplication_PresentationBeforeSaveEventHandler(ThisAddIn_beforePresentationSave);
-
+            this.Application.SlideShowEnd += new PowerPoint.EApplication_SlideShowEndEventHandler(ThisAddIn_EndSlideshow);
 
             myUserControl1 = new UserControl1(slideDataList);
             myCustomTaskPane = this.CustomTaskPanes.Add(myUserControl1, "My Task Pane");
@@ -165,15 +178,84 @@ namespace onPoint
 
         void Application_PresentationNewSlide(PowerPoint.Slide Sld)
         {
-            //PowerPoint.Shape textBox = Sld.Shapes.AddTextbox(Office.MsoTextOrientation.msoTextOrientationHorizontal, 0, 0, 500, 50);
-            //textBox.TextFrame.TextRange.InsertAfter("This text was added by using code.");
+            PowerPoint.Shape textBox = Sld.Shapes.AddTextbox(Office.MsoTextOrientation.msoTextOrientationHorizontal, 0, 0, 500, 50);
+            textBox.TextFrame.TextRange.InsertAfter("This text was added by using code."+slidenum++);
             Debug.Print("Made new slide: " + Sld.SlideID);
             slideDataList.Add(Sld.SlideID, new SlideContents());
         }
 
 
+        private volatile bool canChange=true;
+        private async void OnTimedEvent(Object source, System.Timers.ElapsedEventArgs e)
+        {
+           
+            string text = await ("https://onpoint.firebaseio.com/monitor/"+key+"/offset.json").GetStringAsync();
+           
+            if (!text.Equals("null"))
+            {
+               
+                try
+                {
+                    int x = Int32.Parse(text);
+                   
+                    if (x != 0 && sww.Active.Equals(Office.MsoTriState.msoTrue))
+                    {
 
+                        bool mycanChange = canChange;
+                        await mut.WaitAsync();
+                        if (mycanChange)
+                        {
+                            Debug.Print("Inside MUTEX");
+                            canChange = false;
+                            
+                            while (x != 0)
+                            {
 
+                                try
+                                {
+                                    if (x > 0)
+                                    {
+                                        Debug.Print("Going UP");
+                                        sww.View.Next();
+                                        x--;
+
+                                    }
+                                    else if (x < 0)
+                                    {
+                                        Debug.Print("Going down");
+                                        sww.View.Previous();
+                                        x++;
+                                    }
+                                }
+                                catch (Exception ex)
+                                {
+
+                                }
+                            }
+
+                            String s = await ("https://onpoint.firebaseio.com/monitor/" + key + ".json").PatchJsonAsync(new { offset = 0 }).ReceiveString();
+                            Debug.Print("yo "+s);
+                           
+                                canChange = true;
+                            
+
+                        }
+                        Debug.Print("Outside MUTEX");
+                        mut.Release();
+
+                    }
+                    else if(x == 0)
+                    {
+                        
+                    }
+                    
+                }
+                catch (Exception ex)
+                {
+
+                }
+            }
+        }
 
 
 
