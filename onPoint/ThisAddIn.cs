@@ -17,6 +17,8 @@ namespace onPoint
     {
         private UserControl1 myUserControl1;
         private Microsoft.Office.Tools.CustomTaskPane myCustomTaskPane;
+        private Dictionary<int, SlideContents> slideDataList;
+
         private void ThisAddIn_Startup(object sender, System.EventArgs e)
         {
         }
@@ -27,7 +29,12 @@ namespace onPoint
 
         private void ThisAddIn_SlideChange(PowerPoint.SlideRange sld)
         {
-            Debug.Print(sld.SlideIndex+" ");
+            if (sld.Count == 1)
+            {
+                Debug.Print("Changed Slide" + sld.SlideID);
+                //slideDataList.Add(sld.SlideID, new SlideContents());
+                myUserControl1.changeSlide(sld.SlideID);
+            } 
         }
 
 
@@ -47,14 +54,15 @@ namespace onPoint
         {
             this.Startup += new System.EventHandler(ThisAddIn_Startup);
             this.Shutdown += new System.EventHandler(ThisAddIn_Shutdown);
-
+            slideDataList = new Dictionary<int, SlideContents>();
 
             this.Application.SlideShowNextSlide += new PowerPoint.EApplication_SlideShowNextSlideEventHandler(ThisAddIn_NextSlide);
 
 
             this.Application.PresentationNewSlide += new PowerPoint.EApplication_PresentationNewSlideEventHandler(Application_PresentationNewSlide);
             this.Application.SlideSelectionChanged += new PowerPoint.EApplication_SlideSelectionChangedEventHandler(ThisAddIn_SlideChange);
-            myUserControl1 = new UserControl1();
+           
+            myUserControl1 = new UserControl1(slideDataList);
             myCustomTaskPane = this.CustomTaskPanes.Add(myUserControl1, "My Task Pane");
             myCustomTaskPane.Visible = true;
 
@@ -66,6 +74,8 @@ namespace onPoint
             PowerPoint.Shape textBox = Sld.Shapes.AddTextbox(
                 Office.MsoTextOrientation.msoTextOrientationHorizontal, 0, 0, 500, 50);
             textBox.TextFrame.TextRange.InsertAfter("This text was added by using code.");
+            Debug.Print("Made new slide: " + Sld.SlideID);
+            slideDataList.Add(Sld.SlideID, new SlideContents());
         }
 
 
