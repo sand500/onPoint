@@ -20,6 +20,12 @@ namespace onPoint
             InitializeComponent();
             SlideData = d;
         }
+
+        public void changeDict(Dictionary<int, SlideContents> sd)
+        {
+            SlideData= sd;
+        }
+
         public void changeSlide(int id)
         {
             currentKey = id;
@@ -28,8 +34,14 @@ namespace onPoint
 
         private void switchData()
         { 
-             textBox1.Text = SlideData[currentKey].name;
-             numericUpDown1.Value = SlideData[currentKey].time; 
+            if(SlideData.ContainsKey(currentKey))
+            {
+                textBox1.Text = SlideData[currentKey].name;
+                numericUpDown1.Value = SlideData[currentKey].time; 
+            } else
+            {
+                
+            }
         }
         private void textBox1_TextChanged(object sender, EventArgs e)
         {
@@ -63,6 +75,16 @@ namespace onPoint
         private void textBox2_TextChanged(object sender, EventArgs e)
         {
             key = textBox2.Text;
+        }
+
+        public String getKey()
+        {
+            return key;
+        }
+        public void changeKey(string k)
+        {
+            textBox2.Text = k;
+            key = k;
         }
     }
 }

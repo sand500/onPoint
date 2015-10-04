@@ -1,4 +1,6 @@
-﻿namespace onPoint
+﻿using System;
+
+namespace onPoint
 {
     partial class UserControl1
     {
@@ -120,6 +122,9 @@
             this.PerformLayout();
 
         }
+
+
+
 
         #endregion
 
