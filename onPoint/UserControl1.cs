@@ -14,6 +14,7 @@ namespace onPoint
     {
         Dictionary<int, SlideContents> SlideData;
         volatile int currentKey = 0;
+        volatile String key = "";
         public UserControl1(Dictionary<int, SlideContents> d)
         {
             InitializeComponent();
@@ -27,12 +28,12 @@ namespace onPoint
 
         private void switchData()
         { 
-             textBox1.Text = SlideData[currentKey].text;
-             numericUpDown1.Value = SlideData[currentKey].slidetime; 
+             textBox1.Text = SlideData[currentKey].name;
+             numericUpDown1.Value = SlideData[currentKey].time; 
         }
         private void textBox1_TextChanged(object sender, EventArgs e)
         {
-            SlideData[currentKey].text = textBox1.Text;
+            SlideData[currentKey].name = textBox1.Text;
         }
 
         private void button1_Click(object sender, EventArgs e)
@@ -46,7 +47,22 @@ namespace onPoint
         }
         private void numericUpDown1_ValueChanged(object sender, EventArgs e)
         {
-            SlideData[currentKey].slidetime = (int)numericUpDown1.Value;
+            SlideData[currentKey].time = (int)numericUpDown1.Value;
+        }
+
+        private void UserControl1_Load(object sender, EventArgs e)
+        {
+
+        }
+
+        private void label3_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void textBox2_TextChanged(object sender, EventArgs e)
+        {
+            key = textBox2.Text;
         }
     }
 }

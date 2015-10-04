@@ -34,15 +34,23 @@ namespace onPoint
                 Debug.Print("Changed Slide" + sld.SlideID);
                 //slideDataList.Add(sld.SlideID, new SlideContents());
                 myUserControl1.changeSlide(sld.SlideID);
+              
             } 
         }
-
-
+       
         private async void ThisAddIn_NextSlide(PowerPoint.SlideShowWindow Wn)
         {
-             String s =await ( "https://onpoint.firebaseio.com/showss/38A011750F21.json").PatchJsonAsync(new { a = 1, b = 2 }).ReceiveString();
+            int current = Wn.View.Slide.SlideID;
+            String s = await("https://onpoint.firebaseio.com/monitor/ijpst.json").PatchJsonAsync(new { currentSlide = current }).ReceiveString();
+
+        }
+        
+        private async void ThisAddIn_StartSlideshow(PowerPoint.SlideShowWindow sw )
+        {
+            String s = await("https://onpoint.firebaseio.com/shows/ijpst.json").PatchJsonAsync(slideDataList).ReceiveString();
             Debug.Print(s + "\n");
         }
+    
 
         #region VSTO generated code
 
@@ -61,11 +69,12 @@ namespace onPoint
 
             this.Application.PresentationNewSlide += new PowerPoint.EApplication_PresentationNewSlideEventHandler(Application_PresentationNewSlide);
             this.Application.SlideSelectionChanged += new PowerPoint.EApplication_SlideSelectionChangedEventHandler(ThisAddIn_SlideChange);
-           
+            this.Application.SlideShowBegin += new PowerPoint.EApplication_SlideShowBeginEventHandler(ThisAddIn_StartSlideshow);
             myUserControl1 = new UserControl1(slideDataList);
             myCustomTaskPane = this.CustomTaskPanes.Add(myUserControl1, "My Task Pane");
             myCustomTaskPane.Visible = true;
 
+        
 
         }
 

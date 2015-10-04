@@ -8,7 +8,7 @@ namespace onPoint
 {
     public class SlideContents
     {
-        public int slidetime { get; set; } = 0;
-        public String text { get; set; } = "";
+        public int time { get; set; } = 0;
+        public String name { get; set; } = "";
     }
 }
